@@ -24,18 +24,18 @@ class TestBlocks(unittest.TestCase):
 
     @unittest.skipIf(not torch.cuda.is_available(), "CUDA not available")
     def test_frozen_batchnorm_fp16(self):
-        from torch.cuda.amp import autocast
+        from torch.amp import autocast
 
         C = 10
         input = torch.rand(1, C, 10, 10).cuda()
         m = FrozenBatchNorm2d(C).cuda()
-        with autocast():
+        with autocast(device_type="cuda"):
             output = m(input.half())
         self.assertEqual(output.dtype, torch.float16)
 
         # requires_grad triggers a different codepath
         input.requires_grad_()
-        with autocast():
+        with autocast(device_type="cuda"):
             output = m(input.half())
         self.assertEqual(output.dtype, torch.float16)
 

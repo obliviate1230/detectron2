@@ -5,7 +5,13 @@ import torch
 from torch import nn
 from torchvision.ops import RoIPool
 
-from detectron2.layers import ROIAlign, ROIAlignRotated, cat, nonzero_tuple, shapes_to_tensor
+from detectron2.layers import (
+    ROIAlign,
+    ROIAlignRotated,
+    cat,
+    nonzero_tuple,
+    shapes_to_tensor,
+)
 from detectron2.structures import Boxes
 from detectron2.utils.tracing import assert_fx_safe, is_fx_tracing
 
@@ -61,7 +67,9 @@ def assign_boxes_to_levels(
 
 # script the module to avoid hardcoded device type
 @torch.jit.script_if_tracing
-def _convert_boxes_to_pooler_format(boxes: torch.Tensor, sizes: torch.Tensor) -> torch.Tensor:
+def _convert_boxes_to_pooler_format(
+    boxes: torch.Tensor, sizes: torch.Tensor
+) -> torch.Tensor:
     sizes = sizes.to(device=boxes.device)
     indices = torch.repeat_interleave(
         torch.arange(len(sizes), dtype=boxes.dtype, device=boxes.device), sizes
@@ -163,14 +171,20 @@ class ROIPooler(nn.Module):
         if pooler_type == "ROIAlign":
             self.level_poolers = nn.ModuleList(
                 ROIAlign(
-                    output_size, spatial_scale=scale, sampling_ratio=sampling_ratio, aligned=False
+                    output_size,
+                    spatial_scale=scale,
+                    sampling_ratio=sampling_ratio,
+                    aligned=False,
                 )
                 for scale in scales
             )
         elif pooler_type == "ROIAlignV2":
             self.level_poolers = nn.ModuleList(
                 ROIAlign(
-                    output_size, spatial_scale=scale, sampling_ratio=sampling_ratio, aligned=True
+                    output_size,
+                    spatial_scale=scale,
+                    sampling_ratio=sampling_ratio,
+                    aligned=True,
                 )
                 for scale in scales
             )
@@ -180,7 +194,9 @@ class ROIPooler(nn.Module):
             )
         elif pooler_type == "ROIAlignRotated":
             self.level_poolers = nn.ModuleList(
-                ROIAlignRotated(output_size, spatial_scale=scale, sampling_ratio=sampling_ratio)
+                ROIAlignRotated(
+                    output_size, spatial_scale=scale, sampling_ratio=sampling_ratio
+                )
                 for scale in scales
             )
         else:
@@ -218,7 +234,7 @@ class ROIPooler(nn.Module):
                 A tensor of shape (M, C, output_size, output_size) where M is the total number of
                 boxes aggregated over all N batch images and C is the number of channels in `x`.
         """
-        num_level_assignments = len(self.level_poolers)
+        num_level_assignments = len(self.level_poolers) # 4
 
         if not is_fx_tracing():
             torch._assert(
@@ -240,19 +256,25 @@ class ROIPooler(nn.Module):
         if len(box_lists) == 0:
             return _create_zeros(None, x[0].shape[1], *self.output_size, x[0])
 
-        pooler_fmt_boxes = convert_boxes_to_pooler_format(box_lists)
+        pooler_fmt_boxes = convert_boxes_to_pooler_format(box_lists) # 将一批图像中不同数量的边界框转换为一个统一的张量格式，并附加每个box所属图像的索引（batch index）
 
         if num_level_assignments == 1:
             return self.level_poolers[0](x[0], pooler_fmt_boxes)
 
         level_assignments = assign_boxes_to_levels(
-            box_lists, self.min_level, self.max_level, self.canonical_box_size, self.canonical_level
-        )
+            box_lists,
+            self.min_level,
+            self.max_level,
+            self.canonical_box_size,
+            self.canonical_level,
+        ) # 将不同尺寸的候选框分配到合适的特征图层级
 
-        num_channels = x[0].shape[1]
-        output_size = self.output_size[0]
+        num_channels = x[0].shape[1] # 256
+        output_size = self.output_size[0] # 7
 
-        output = _create_zeros(pooler_fmt_boxes, num_channels, output_size, output_size, x[0])
+        output = _create_zeros(
+            pooler_fmt_boxes, num_channels, output_size, output_size, x[0]
+        ) # [8192, 256, 7, 7]
 
         for level, pooler in enumerate(self.level_poolers):
             inds = nonzero_tuple(level_assignments == level)[0]

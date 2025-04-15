@@ -155,11 +155,11 @@ class MaskRCNNE2ETest(InstanceModelE2ETest, unittest.TestCase):
 
     @unittest.skipIf(not torch.cuda.is_available(), "CUDA not available")
     def test_autocast(self):
-        from torch.cuda.amp import autocast
+        from torch.amp import autocast
 
         inputs = [{"image": torch.rand(3, 100, 100)}]
         self.model.eval()
-        with autocast(), typecheck_hook(
+        with autocast(device_type="cuda"), typecheck_hook(
             self.model.backbone, in_dtype=torch.float32, out_dtype=torch.float16
         ), typecheck_hook(
             self.model.roi_heads.box_predictor, in_dtype=torch.float16, out_dtype=torch.float16
@@ -195,11 +195,11 @@ class RetinaNetE2ETest(InstanceModelE2ETest, unittest.TestCase):
 
     @unittest.skipIf(not torch.cuda.is_available(), "CUDA not available")
     def test_autocast(self):
-        from torch.cuda.amp import autocast
+        from torch.amp import autocast
 
         inputs = [{"image": torch.rand(3, 100, 100)}]
         self.model.eval()
-        with autocast(), typecheck_hook(
+        with autocast(device_type="cuda"), typecheck_hook(
             self.model.backbone, in_dtype=torch.float32, out_dtype=torch.float16
         ), typecheck_hook(self.model.head, in_dtype=torch.float16, out_dtype=torch.float16):
             out = self.model(inputs)[0]["instances"]

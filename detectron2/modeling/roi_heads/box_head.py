@@ -31,7 +31,12 @@ class FastRCNNConvFCHead(nn.Sequential):
 
     @configurable
     def __init__(
-        self, input_shape: ShapeSpec, *, conv_dims: List[int], fc_dims: List[int], conv_norm=""
+        self,
+        input_shape: ShapeSpec,
+        *,
+        conv_dims: List[int],
+        fc_dims: List[int],
+        conv_norm=""
     ):
         """
         NOTE: this interface is experimental.
@@ -46,7 +51,11 @@ class FastRCNNConvFCHead(nn.Sequential):
         super().__init__()
         assert len(conv_dims) + len(fc_dims) > 0
 
-        self._output_size = (input_shape.channels, input_shape.height, input_shape.width)
+        self._output_size = (
+            input_shape.channels,
+            input_shape.height,
+            input_shape.width,
+        )
 
         self.conv_norm_relus = []
         for k, conv_dim in enumerate(conv_dims):
@@ -80,10 +89,10 @@ class FastRCNNConvFCHead(nn.Sequential):
 
     @classmethod
     def from_config(cls, cfg, input_shape):
-        num_conv = cfg.MODEL.ROI_BOX_HEAD.NUM_CONV
-        conv_dim = cfg.MODEL.ROI_BOX_HEAD.CONV_DIM
-        num_fc = cfg.MODEL.ROI_BOX_HEAD.NUM_FC
-        fc_dim = cfg.MODEL.ROI_BOX_HEAD.FC_DIM
+        num_conv = cfg.MODEL.ROI_BOX_HEAD.NUM_CONV # 2
+        conv_dim = cfg.MODEL.ROI_BOX_HEAD.CONV_DIM # 256
+        num_fc = cfg.MODEL.ROI_BOX_HEAD.NUM_FC # 2
+        fc_dim = cfg.MODEL.ROI_BOX_HEAD.FC_DIM # 1024
         return {
             "input_shape": input_shape,
             "conv_dims": [conv_dim] * num_conv,
